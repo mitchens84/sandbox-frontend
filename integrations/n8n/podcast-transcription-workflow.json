@@ -1,5 +1,5 @@
 {
-  "name": "Podcast Transcription via AssemblyAI",
+  "name": "Podcast Transcription via AssemblyAI with AI Processing",
   "nodes": [
     {
       "parameters": {
@@ -11,7 +11,7 @@
       "id": "webhook-trigger",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
+      "typeVersion": 2,
       "position": [250, 300],
       "webhookId": "podcast-transcribe-webhook"
     },
@@ -102,19 +102,29 @@
     {
       "parameters": {
         "conditions": {
-          "string": [
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
             {
-              "value1": "={{ $json.status }}",
-              "operation": "notEquals",
-              "value2": "completed"
+              "id": "status-not-completed",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
             }
-          ]
+          ],
+          "combinator": "and"
         }
       },
       "id": "check-if-processing",
       "name": "Still Processing?",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
+      "typeVersion": 2,
       "position": [1250, 300]
     },
     {
@@ -149,13 +159,13 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"success\": true, \"message\": \"Transcription completed\", \"recordId\": $node['Webhook'].json.body.recordId } }}"
+        "responseBody": "={{ { \"success\": true, \"message\": \"Transcription and AI analysis completed\", \"recordId\": $node['Webhook'].json.body.recordId } }}"
       },
       "id": "webhook-response-success",
       "name": "Respond to Webhook - Success",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1650, 200]
+      "position": [2050, 200]
     },
     {
       "parameters": {
@@ -171,20 +181,94 @@
     {
       "parameters": {
         "conditions": {
-          "string": [
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
             {
-              "value1": "={{ $json.status }}",
-              "operation": "equals",
-              "value2": "error"
+              "id": "status-is-error",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "error",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
-          ]
+          ],
+          "combinator": "and"
         }
       },
       "id": "check-if-error",
       "name": "Transcription Error?",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
+      "typeVersion": 2,
       "position": [1450, 400]
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "model": "gpt-4o",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert fact-checker and content analyst. Your task is to:\n1. Analyze the podcast transcription for factual claims\n2. Identify key topics, themes, and insights\n3. Extract actionable items and important quotes\n4. Provide a concise summary with main takeaways\n5. Flag any claims that may need verification\n\nFormat your response as JSON with the following structure:\n{\n  \"summary\": \"Brief 2-3 sentence summary\",\n  \"key_topics\": [\"topic1\", \"topic2\"],\n  \"main_insights\": [\"insight1\", \"insight2\"],\n  \"fact_check_flags\": [{\"claim\": \"...\", \"reason\": \"...\"}],\n  \"actionable_items\": [\"item1\", \"item2\"],\n  \"notable_quotes\": [{\"quote\": \"...\", \"context\": \"...\"}]\n}"
+            },
+            {
+              "role": "user",
+              "content": "=Analyze this podcast transcription:\n\n{{ $('Check Transcription Status').item.json.text }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 2000
+        },
+        "responseFormat": "json_object"
+      },
+      "id": "openai-fact-check-and-distill",
+      "name": "OpenAI Fact-Check & Content Distillation",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.4,
+      "position": [1650, 200],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "application": "={{ $node['Webhook'].json.body.baseId }}",
+        "table": "={{ $node['Webhook'].json.body.tableId }}",
+        "id": "={{ $node['Webhook'].json.body.recordId }}",
+        "options": {},
+        "updateAllFields": false,
+        "fields": {
+          "field": [
+            {
+              "fieldId": "AIAnalysis",
+              "fieldValue": "={{ $json.message.content }}"
+            }
+          ]
+        }
+      },
+      "id": "update-airtable-with-ai-analysis",
+      "name": "Update Airtable with AI Analysis",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1850, 200],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "AIRTABLE_CREDENTIAL_ID",
+          "name": "Airtable API"
+        }
+      }
     }
   ],
   "connections": {
@@ -262,6 +346,28 @@
       ]
     },
     "Update Airtable with Transcription": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Fact-Check & Content Distillation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Fact-Check & Content Distillation": {
+      "main": [
+        [
+          {
+            "node": "Update Airtable with AI Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Airtable with AI Analysis": {
       "main": [
         [
           {

@@ -4,7 +4,33 @@ This document provides a quick reference for all the credentials and IDs you nee
 
 ## Required Credentials
 
-### 1. AssemblyAI API Key
+### 1. OpenAI API Key
+
+**Where to get it:**
+- Sign up at https://platform.openai.com
+- Navigate to https://platform.openai.com/api-keys
+- Click "Create new secret key"
+- Copy your API key (starts with `sk-...`)
+
+**Where to use it:**
+Create a credential in n8n:
+1. Go to n8n → Credentials
+2. Add "OpenAI API"
+3. Paste your API key
+4. Save and note the credential ID
+
+**Format:** `sk-proj-...` (your actual key)
+
+**Example:**
+```
+sk-proj-1234567890abcdefghijklmnopqrstuvwxyz...
+```
+
+**Important:** Ensure you have sufficient credits and access to GPT-4o model.
+
+---
+
+### 2. AssemblyAI API Key
 
 **Where to get it:**
 - Sign up at https://www.assemblyai.com
@@ -26,7 +52,7 @@ After:  a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 
 ---
 
-### 2. Airtable Personal Access Token
+### 3. Airtable Personal Access Token
 
 **Where to get it:**
 - Go to https://airtable.com/create/tokens
@@ -48,7 +74,39 @@ Create a credential in n8n:
 
 ---
 
-### 3. Airtable Credential ID
+### 4. OpenAI Credential ID
+
+**Where to get it:**
+After creating the OpenAI credential in n8n (see step 1), the ID will be shown in the credential URL or list.
+
+**Where to use it:**
+Replace `OPENAI_CREDENTIAL_ID` in the workflow JSON at this location:
+- **OpenAI Fact-Check & Content Distillation** node → credentials → openAiApi → id
+
+**Format:** Numeric ID (e.g., `1`, `42`, `123`)
+
+**Example:**
+```json
+Before:
+"credentials": {
+  "openAiApi": {
+    "id": "OPENAI_CREDENTIAL_ID",
+    "name": "OpenAI API"
+  }
+}
+
+After:
+"credentials": {
+  "openAiApi": {
+    "id": "2",
+    "name": "OpenAI API"
+  }
+}
+```
+
+---
+
+### 5. Airtable Credential ID
 
 **Where to get it:**
 After creating the Airtable credential in n8n (see above), the ID will be shown in the credential URL or list.
@@ -57,6 +115,7 @@ After creating the Airtable credential in n8n (see above), the ID will be shown 
 Replace `AIRTABLE_CREDENTIAL_ID` in the workflow JSON at these locations:
 - **Get Podcast Record** node → credentials → airtableTokenApi → id
 - **Update Airtable with Transcription** node → credentials → airtableTokenApi → id
+- **Update Airtable with AI Analysis** node → credentials → airtableTokenApi → id
 
 **Format:** Numeric ID (e.g., `1`, `42`, `123`)
 
@@ -81,7 +140,7 @@ After:
 
 ---
 
-### 4. Airtable Base ID
+### 6. Airtable Base ID
 
 **Where to get it:**
 - Open your Airtable base in a browser
@@ -97,7 +156,7 @@ This is passed in the webhook payload when triggering the workflow.
 
 ---
 
-### 5. Airtable Table ID
+### 7. Airtable Table ID
 
 **Where to get it:**
 - Open your Airtable table in a browser
@@ -115,15 +174,19 @@ This is passed in the webhook payload when triggering the workflow.
 
 ## Quick Setup Checklist
 
+- [ ] Get OpenAI API key from https://platform.openai.com/api-keys
+- [ ] Add OpenAI credential in n8n with the API key
+- [ ] Note the OpenAI credential ID
 - [ ] Get AssemblyAI API key from https://www.assemblyai.com/app/account
 - [ ] Replace `ASSEMBLYAI_API_KEY_PLACEHOLDER` in 2 HTTP Request nodes
 - [ ] Create Airtable Personal Access Token at https://airtable.com/create/tokens
 - [ ] Add Airtable credential in n8n with the token
 - [ ] Note the Airtable credential ID
-- [ ] Replace `AIRTABLE_CREDENTIAL_ID` in the workflow (or select credential in UI)
+- [ ] Replace `AIRTABLE_CREDENTIAL_ID` in the workflow (or select credential in UI, 3 instances)
+- [ ] Replace `OPENAI_CREDENTIAL_ID` in the workflow (or select credential in UI)
 - [ ] Get your Airtable Base ID from the URL
 - [ ] Get your Airtable Table ID from the URL
-- [ ] Create required fields in Airtable: `AudioFileURL`, `Transcription`
+- [ ] Create required fields in Airtable: `AudioFileURL`, `Transcription`, `AIAnalysis`
 - [ ] Activate the workflow in n8n
 - [ ] Copy the webhook URL from the Webhook node
 - [ ] Test the workflow with a sample record
@@ -156,7 +219,13 @@ Replace:
 
 After setup, verify each component:
 
-1. **AssemblyAI API Key**: Test with a simple cURL request
+1. **OpenAI API Key**: Test with a simple cURL request
+   ```bash
+   curl https://api.openai.com/v1/models \
+     -H "Authorization: Bearer YOUR_OPENAI_API_KEY"
+   ```
+
+2. **AssemblyAI API Key**: Test with a simple cURL request
    ```bash
    curl https://api.assemblyai.com/v2/transcript \
      -H "Authorization: YOUR_API_KEY" \
@@ -164,17 +233,23 @@ After setup, verify each component:
      -d '{"audio_url": "https://example.com/audio.mp3"}'
    ```
 
-2. **Airtable Token**: Test by viewing a record
+3. **Airtable Token**: Test by viewing a record
    ```bash
    curl "https://api.airtable.com/v0/YOUR_BASE_ID/YOUR_TABLE_ID" \
      -H "Authorization: Bearer YOUR_PERSONAL_ACCESS_TOKEN"
    ```
 
-3. **Webhook**: Send a test request and watch the n8n execution log
+4. **Webhook**: Send a test request and watch the n8n execution log
 
 ---
 
 ## Common Issues
+
+**"Unauthorized" error with OpenAI:**
+- Check that you copied the full API key (starts with `sk-`)
+- Ensure there are no extra spaces or quotes
+- Verify you have sufficient credits in your OpenAI account
+- Confirm your API key has access to GPT-4o model
 
 **"Unauthorized" error with AssemblyAI:**
 - Check that you copied the full API key
@@ -190,3 +265,9 @@ After setup, verify each component:
 - Ensure the workflow is activated (toggle ON)
 - Check the webhook URL is correct
 - Verify the payload format matches the expected structure
+
+**AI analysis fails or returns errors:**
+- Verify OpenAI API key is valid and has credits
+- Check that the transcription completed successfully
+- Ensure the model name is correct (`gpt-4o` or `gpt-4o-mini`)
+- Review the OpenAI node execution log for specific error messages

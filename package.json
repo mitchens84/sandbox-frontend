@@ -1,40 +1,44 @@
 {
-    "name": "template-project",
-    "type": "module",
-    "private": true,
-    "version": "0.0.1",
-    "description": "A template for frontend projects with HTML, optional React/Vite, and utility scripts.",
-    "main": "index.html",
-    "scripts": {
-        "start": "echo \"No explicit start command for the root template. Serve index.html or specific content manually.\"",
-        "dev": "echo \"Run 'npm run dev' from within a specific Vite project if applicable, or serve index.html.\"",
-        "build": "sh build.sh",
-        "generate-toc": "node generate-toc.js",
-        "add-content": "node add-content.js",
-        "setup-storage": "node setup-storage.js",
-        "run-qc": "node run-qc.js",
-        "test": "echo \"Open EXPRESS/comprehensive-storage-test/index.html in a browser to run manual tests.\""
-    },
-    "repository": {
-        "type": "git",
-        "url": ""
-    },
-    "keywords": [
-        "frontend",
-        "template",
-        "html",
-        "javascript",
-        "vite",
-        "react"
-    ],
-    "author": "Your Name/Team",
-    "license": "MIT",
-    "dependencies": {
-    },
-    "devDependencies": {
-        "vite": "^6.4.1",
-        "@vitejs/plugin-react": "^4.2.0",
-        "eslint": "^8.0.0",
-        "prettier": "^3.8.0"
-    }
+  "name": "template-project",
+  "type": "module",
+  "private": true,
+  "version": "0.0.1",
+  "description": "A template for frontend projects with HTML, optional React/Vite, and utility scripts.",
+  "main": "index.html",
+  "scripts": {
+    "start": "echo \"No explicit start command for the root template. Serve index.html or specific content manually.\"",
+    "dev": "echo \"Run 'npm run dev' from within a specific Vite project if applicable, or serve index.html.\"",
+    "build": "sh build.sh",
+    "generate-toc": "node generate-toc.js",
+    "add-content": "node add-content.js",
+    "setup-storage": "node setup-storage.js",
+    "run-qc": "node run-qc.js",
+    "test": "echo \"Open EXPRESS/comprehensive-storage-test/index.html in a browser to run manual tests.\""
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "frontend",
+    "template",
+    "html",
+    "javascript",
+    "vite",
+    "react"
+  ],
+  "author": "Your Name/Team",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "vite": "^6.4.2",
+    "@vitejs/plugin-react": "^4.2.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.8.0"
+  },
+  "overrides": {
+    "picomatch": ">=4.0.4",
+    "brace-expansion": ">=1.1.13",
+    "flatted": ">=3.4.2"
+  }
 }

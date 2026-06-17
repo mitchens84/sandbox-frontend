@@ -34,3 +34,6 @@ build_logs/
 
 data/*
 !data/airtable_index_data.json
+
+# Claude Code worktrees (per STD-TOOL_GIT §2.2)
+.claude/worktrees/
